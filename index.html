@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chetan Surya | Student Developer Portfolio</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            carbon: {
+              950: '#07090c',
+              900: '#0d1117', // Matte Carbon
+              850: '#111620',
+              800: '#161b22',
+              700: '#21262d',
+              600: '#30363d',
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981', // Crisp Neon Emerald
+              600: '#059669',
+              950: '#022c22',
+            },
+            lime: {
+              300: '#bef264',
+              400: '#a3e635', // Bright Lime Accent
+              500: '#84cc16',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          boxShadow: {
+            'emerald-glow': '0 0 25px rgba(16, 185, 129, 0.4)',
+            'emerald-glow-lg': '0 0 45px rgba(16, 185, 129, 0.65)',
+            'lime-glow': '0 0 25px rgba(163, 230, 53, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone for JSX compilation in browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Custom Cyber Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1117;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #163629;
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-[#0d1117] text-zinc-100 font-sans selection:bg-emerald-500 selection:text-black overflow-x-hidden antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // 1. MatrixGridCanvas: Interactive HTML5 Canvas Dot Grid with Spring Physics
+    function MatrixGridCanvas() {
+      const canvasRef = useRef(null);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let animationFrameId;
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+
+        const mouse = {
+          x: -1000,
+          y: -1000,
+          targetX: -1000,
+          targetY: -1000,
+          isHovering: false,
+          radius: 170,
+        };
+
+        const SPACING = 34;
+        let dots = [];
+
+        const initDots = () => {
+          dots = [];
+          const cols = Math.ceil(width / SPACING) + 2;
+          const rows = Math.ceil(height / SPACING) + 2;
+
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const x = c * SPACING;
+              const y = r * SPACING;
+              dots.push({
+                originX: x,
+                originY: y,
+                x: x,
+                y: y,
+                vx: 0,
+                vy: 0,
+                baseRadius: 1.25,
+                radius: 1.25,
+                alpha: 0.16,
+                baseAlpha: 0.16,
+                color: '#10b981',
+              });
+            }
+          }
+        };
+
+        const handleResize = () => {
+          const dpr = window.devicePixelRatio || 1;
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+          canvas.style.width = width + 'px';
+          canvas.style.height = height + 'px';
+          ctx.scale(dpr, dpr);
+          initDots();
+        };
+
+        handleResize();
+
+        const onMouseMove = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          mouse.targetX = e.clientX - rect.left;
+          mouse.targetY = e.clientY - rect.top;
+          mouse.isHovering = true;
+        };
+
+        const onMouseLeave = () => {
+          mouse.targetX = -1000;
+          mouse.targetY = -1000;
+          mouse.isHovering = false;
+        };
+
+        const onTouchMove = (e) => {
+          if (e.touches.length > 0) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.targetX = e.touches[0].clientX - rect.left;
+            mouse.targetY = e.touches[0].clientY - rect.top;
+            mouse.isHovering = true;
+          }
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseleave', onMouseLeave);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('resize', handleResize);
+
+        const render = (time) => {
+          mouse.x += (mouse.targetX - mouse.x) * 0.15;
+          mouse.y += (mouse.targetY - mouse.y) * 0.15;
+
+          ctx.clearRect(0, 0, width, height);
+
+          const spring = 0.075;
+          const friction = 0.82;
+          const t = time * 0.0016;
+          const activeDots = [];
+
+          for (let i = 0; i < dots.length; i++) {
+            const dot = dots[i];
+            const wave = Math.sin(dot.originX * 0.006 + dot.originY * 0.005 + t) * 3.5;
+            const targetOriginY = dot.originY + wave;
+
+            const dx = dot.x - mouse.x;
+            const dy = dot.y - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < mouse.radius && mouse.isHovering) {
+              const force = (1 - dist / mouse.radius);
+              const angle = Math.atan2(dy, dx);
+              dot.vx += Math.cos(angle) * force * 5.2;
+              dot.vy += Math.sin(angle) * force * 5.2;
+
+              const targetAlpha = 0.25 + force * 0.75;
+              dot.alpha += (targetAlpha - dot.alpha) * 0.2;
+              dot.radius += (dot.baseRadius + force * 2.2 - dot.radius) * 0.2;
+              dot.color = force > 0.65 ? '#a3e635' : '#10b981';
+
+              if (force > 0.35) {
+                activeDots.push(dot);
+              }
+            } else {
+              dot.alpha += (dot.baseAlpha - dot.alpha) * 0.08;
+              dot.radius += (dot.baseRadius - dot.radius) * 0.08;
+              dot.color = '#10b981';
+            }
+
+            const ax = (dot.originX - dot.x) * spring;
+            const ay = (targetOriginY - dot.y) * spring;
+
+            dot.vx = (dot.vx + ax) * friction;
+            dot.vy = (dot.vy + ay) * friction;
+
+            dot.x += dot.vx;
+            dot.y += dot.vy;
+
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, Math.max(0.6, dot.radius), 0, Math.PI * 2);
+
+            if (dot.alpha > 0.45) {
+              ctx.fillStyle = dot.color;
+              ctx.shadowColor = dot.color;
+              ctx.shadowBlur = 10;
+            } else {
+              ctx.fillStyle = `rgba(16, 185, 129, ${dot.alpha})`;
+              ctx.shadowBlur = 0;
+            }
+            ctx.fill();
+          }
+
+          // Dynamic connecting laser lines between excited dots
+          if (activeDots.length > 1) {
+            ctx.shadowBlur = 0;
+            for (let j = 0; j < activeDots.length; j++) {
+              for (let k = j + 1; k < activeDots.length; k++) {
+                const p1 = activeDots[j];
+                const p2 = activeDots[k];
+                const segDist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                if (segDist < SPACING * 1.6) {
+                  const lineAlpha = (1 - segDist / (SPACING * 1.6)) * 0.3;
+                  ctx.beginPath();
+                  ctx.moveTo(p1.x, p1.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.strokeStyle = `rgba(16, 185, 129, ${lineAlpha})`;
+                  ctx.lineWidth = 0.9;
+                  ctx.stroke();
+                }
+              }
+            }
+          }
+
+          animationFrameId = requestAnimationFrame(render);
+        };
+
+        animationFrameId = requestAnimationFrame(render);
+
+        return () => {
+          cancelAnimationFrame(animationFrameId);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseleave', onMouseLeave);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('resize', handleResize);
+        };
+      }, []);
+
+      return (
+        <canvas
+          ref={canvasRef}
+          className="fixed inset-0 pointer-events-auto z-0"
+          style={{ background: 'transparent' }}
+          aria-hidden="true"
+        />
+      );
+    }
+
+    // 2. Navbar: Floating Frosted-Glass Navigation Bar
+    function Navbar() {
+      const [isScrolled, setIsScrolled] = useState(false);
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      const [activeSection, setActiveSection] = useState('hero');
+
+      useEffect(() => {
+        const handleScroll = () => {
+          setIsScrolled(window.scrollY > 20);
+          const sections = ['projects', 'skills', 'campus', 'about', 'contact'];
+          const scrollPosition = window.scrollY + 200;
+
+          for (const section of sections) {
+            const el = document.getElementById(section);
+            if (el) {
+              const top = el.offsetTop;
+              const height = el.offsetHeight;
+              if (scrollPosition >= top && scrollPosition < top + height) {
+                setActiveSection(section);
+                break;
+              }
+            }
+          }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const navLinks = [
+        { name: 'Projects', href: '#projects', id: 'projects' },
+        { name: 'Skills', href: '#skills', id: 'skills' },
+        { name: 'Campus Journey', href: '#campus', id: 'campus' },
+        { name: 'About', href: '#about', id: 'about' },
+        { name: 'Contact', href: '#contact', id: 'contact' },
+      ];
+
+      const handleLinkClick = (e, href) => {
+        e.preventDefault();
+        setMobileMenuOpen(false);
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      };
+
+      return (
+        <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 sm:px-6 pt-4 pointer-events-none">
+          <nav
+            className={`w-full max-w-6xl pointer-events-auto transition-all duration-300 rounded-2xl border ${
+              isScrolled
+                ? 'bg-[#0d1117]/85 backdrop-blur-xl border-emerald-500/25 shadow-[0_12px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.12)] py-3 px-5 sm:px-7'
+                : 'bg-[#0d1117]/70 backdrop-blur-lg border-emerald-500/15 shadow-[0_8px_30px_rgba(0,0,0,0.6)] py-3.5 px-5 sm:px-7'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              {/* Logo */}
+              <a
+                href="#hero"
+                onClick={(e) => handleLinkClick(e, '#hero')}
+                className="flex items-center gap-2 group focus:outline-none"
+                aria-label="Chetan Surya Home"
+              >
+                <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-950 to-carbon-900 border border-emerald-500/40 group-hover:border-emerald-400 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all duration-300">
+                  <span className="font-mono text-sm font-bold text-emerald-400 group-hover:text-lime-300 transition-colors">
+                    CS
+                  </span>
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse border-2 border-[#0d1117]" />
+                </div>
+
+                <div className="flex flex-col">
+                  <span className="font-mono text-sm sm:text-base font-bold text-zinc-100 tracking-tight flex items-center gap-1">
+                    <span>Chetan</span>
+                    <span className="text-emerald-400 group-hover:text-lime-400 transition-colors">Surya</span>
+                    <span className="text-xs text-emerald-500/80 font-mono font-normal hidden sm:inline">&lt;dev/&gt;</span>
+                  </span>
+                </div>
+              </a>
+
+              {/* Desktop Nav Links */}
+              <div className="hidden md:flex items-center gap-1 lg:gap-2">
+                {navLinks.map((link) => {
+                  const isActive = activeSection === link.id;
+                  return (
+                    <a
+                      key={link.name}
+                      href={link.href}
+                      onClick={(e) => handleLinkClick(e, link.href)}
+                      className={`relative px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? 'text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                          : 'text-zinc-300 hover:text-emerald-400 hover:bg-emerald-950/20'
+                      }`}
+                    >
+                      {link.name}
+                      {isActive && (
+                        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-gradient-to-r from-emerald-400 to-lime-400 rounded-full" />
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Right CTA */}
+              <div className="hidden md:flex items-center gap-3">
+                <a
+                  href="#contact"
+                  onClick={(e) => handleLinkClick(e, '#contact')}
+                  className="relative group overflow-hidden px-4 py-2 rounded-xl text-xs font-mono font-semibold text-emerald-300 bg-emerald-950/50 border border-emerald-500/30 hover:border-emerald-400 hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_0_18px_rgba(16,185,129,0.3)] cursor-pointer"
+                >
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-ping" />
+                    Let's Connect
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/30 to-lime-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </a>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden flex items-center justify-center p-2 rounded-xl text-zinc-300 hover:text-emerald-400 bg-carbon-800/60 border border-emerald-500/20 hover:border-emerald-500/40 transition-colors focus:outline-none"
+                aria-label="Toggle Navigation Menu"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile Dropdown Menu */}
+            {mobileMenuOpen && (
+              <div className="md:hidden mt-3 pt-3 border-t border-emerald-500/20 flex flex-col gap-1.5">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    onClick={(e) => handleLinkClick(e, link.href)}
+                    className="px-4 py-2 text-sm font-medium text-zinc-200 hover:text-emerald-400 hover:bg-emerald-950/40 rounded-xl transition-all flex items-center justify-between"
+                  >
+                    <span>{link.name}</span>
+                    <span className="text-emerald-500/60 font-mono text-xs">→</span>
+                  </a>
+                ))}
+                <div className="pt-2 mt-1 border-t border-emerald-500/10">
+                  <a
+                    href="#contact"
+                    onClick={(e) => handleLinkClick(e, '#contact')}
+                    className="w-full block text-center py-2.5 rounded-xl font-mono text-xs font-semibold text-black bg-emerald-400 hover:bg-emerald-300 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                  >
+                    Open for Internships // Connect
+                  </a>
+                </div>
+              </div>
+            )}
+          </nav>
+        </header>
+      );
+    }
+
+    // 3. Hero: Opening Intro Screen
+    function Hero() {
+      const handleScrollToProjects = (e) => {
+        e.preventDefault();
+        const target = document.getElementById('projects');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      };
+
+      const handleDownloadCV = (e) => {
+        e.preventDefault();
+        alert("Downloading Chetan Surya's Resume / CV (PDF)...");
+      };
+
+      return (
+        <section
+          id="hero"
+          className="relative min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 pb-20 overflow-hidden"
+        >
+          {/* Ambient background glow orbs */}
+          <div
+            className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[600px] h-[350px] sm:h-[450px] bg-emerald-500/10 blur-[130px] rounded-full pointer-events-none"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-1/4 right-10 w-[220px] sm:w-[380px] h-[220px] sm:h-[380px] bg-lime-400/8 blur-[120px] rounded-full pointer-events-none"
+            aria-hidden="true"
+          />
+
+          <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center text-center">
+            {/* Status Badge: Animated blinking radar pill */}
+            <div className="mb-6 sm:mb-8">
+              <div className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-full bg-emerald-950/40 border border-emerald-500/30 backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.18)] hover:border-emerald-400/60 transition-all duration-300 group cursor-default">
+                <span className="relative flex h-3 w-3 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                </span>
+                <span className="font-mono text-xs sm:text-sm font-medium text-emerald-300 tracking-wide flex items-center gap-1.5">
+                  <span>Student Developer</span>
+                  <span className="text-emerald-500/70 font-semibold">//</span>
+                  <span className="text-lime-300 font-semibold group-hover:text-lime-200 transition-colors">
+                    Open for Internships
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            {/* Main Headline */}
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-zinc-100 leading-[1.15] sm:leading-[1.12] mb-6 sm:mb-8">
+              <span className="block text-zinc-200">Hey, I am </span>
+              <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(16,185,129,0.35)]">
+                Chetan Surya
+              </span>
+              <span className="block text-zinc-100 mt-1 sm:mt-2">
+                — Building the Future of Tech.
+              </span>
+            </h1>
+
+            {/* Student Bio */}
+            <p className="text-zinc-300/90 text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl leading-relaxed sm:leading-loose mb-10 sm:mb-12 font-normal">
+              BE 2nd Year{' '}
+              <span className="text-emerald-300 font-medium px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-500/30 whitespace-nowrap">
+                Computer Science with Cyber Security
+              </span>{' '}
+              Student at{' '}
+              <span className="text-zinc-100 font-medium underline decoration-emerald-500/50 decoration-2 underline-offset-4">
+                K.S. Institute of Technology
+              </span>
+              , passionate about{' '}
+              <span className="text-lime-300 font-medium">web development</span>,{' '}
+              <span className="text-emerald-300 font-medium">AI</span>, and building real-world projects.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-5 w-full max-w-md sm:max-w-none mb-12 sm:mb-16">
+              {/* Primary Button */}
+              <a
+                href="#projects"
+                onClick={handleScrollToProjects}
+                className="relative group px-8 py-4 rounded-xl font-semibold text-carbon-950 bg-emerald-400 hover:bg-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.45)] hover:shadow-[0_0_40px_rgba(16,185,129,0.7)] transition-all duration-300 hover:-translate-y-1 active:translate-y-0 transform flex items-center justify-center gap-3 text-sm sm:text-base cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-carbon-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  View My Projects
+                </span>
+                <span className="transform transition-transform duration-300 group-hover:translate-x-1 font-bold">
+                  →
+                </span>
+              </a>
+
+              {/* Secondary Button */}
+              <a
+                href="#resume"
+                onClick={handleDownloadCV}
+                className="px-8 py-4 rounded-xl font-medium text-zinc-200 hover:text-white bg-[#0d1117]/80 hover:bg-emerald-950/40 border border-emerald-500/40 hover:border-emerald-400 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(16,185,129,0.25)] transition-all duration-300 hover:-translate-y-1 active:translate-y-0 transform flex items-center justify-center gap-2.5 text-sm sm:text-base cursor-pointer group"
+              >
+                <svg
+                  className="w-5 h-5 text-emerald-400 group-hover:text-lime-300 transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>Download Resume / CV</span>
+              </a>
+            </div>
+
+            {/* Cyber Telemetry Status Ribbon */}
+            <div className="w-full max-w-3xl pt-6 border-t border-emerald-500/15 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-left">
+              <div className="p-3 rounded-xl bg-carbon-800/40 border border-emerald-500/15 backdrop-blur-sm">
+                <span className="block text-[11px] font-mono uppercase tracking-wider text-emerald-400/70">
+                  Department
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-zinc-200">
+                  CS & Cyber Security
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-carbon-800/40 border border-emerald-500/15 backdrop-blur-sm">
+                <span className="block text-[11px] font-mono uppercase tracking-wider text-emerald-400/70">
+                  College
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-zinc-200">
+                  KSIT Bengaluru
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-carbon-800/40 border border-emerald-500/15 backdrop-blur-sm">
+                <span className="block text-[11px] font-mono uppercase tracking-wider text-emerald-400/70">
+                  Core Stack
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-lime-300">
+                  React // Python // Node
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-carbon-800/40 border border-emerald-500/15 backdrop-blur-sm">
+                <span className="block text-[11px] font-mono uppercase tracking-wider text-emerald-400/70">
+                  Status
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-emerald-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Ready for Hire
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // 4. ProjectCard: 3D Perspective Tilt & Interactive Shine
+    function ProjectCard({ project }) {
+      const cardRef = useRef(null);
+      const [transformStyle, setTransformStyle] = useState('perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)');
+      const [shineStyle, setShineStyle] = useState({ opacity: 0 });
+      const [isHovered, setIsHovered] = useState(false);
+
+      const handleMouseMove = (e) => {
+        if (!cardRef.current) return;
+        const rect = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -8;
+        const rotateY = ((x - centerX) / centerX) * 8;
+
+        setTransformStyle(
+          `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-6px)`
+        );
+
+        const shineX = (x / rect.width) * 100;
+        const shineY = (y / rect.height) * 100;
+        setShineStyle({
+          opacity: 1,
+          background: `radial-gradient(circle at ${shineX}% ${shineY}%, rgba(16, 185, 129, 0.22) 0%, rgba(163, 230, 53, 0.08) 35%, transparent 70%)`,
+        });
+      };
+
+      const handleMouseEnter = () => setIsHovered(true);
+
+      const handleMouseLeave = () => {
+        setIsHovered(false);
+        setTransformStyle('perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)');
+        setShineStyle({ opacity: 0 });
+      };
+
+      return (
+        <div
+          ref={cardRef}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            transform: transformStyle,
+            transition: isHovered
+              ? 'transform 0.1s ease-out, box-shadow 0.3s ease, border-color 0.3s ease'
+              : 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease, border-color 0.3s ease',
+            transformStyle: 'preserve-3d',
+          }}
+          className={`relative rounded-2xl p-6 sm:p-7 flex flex-col justify-between overflow-hidden bg-[#0d1117]/85 backdrop-blur-xl border border-emerald-500/20 transition-all duration-300 ${
+            isHovered
+              ? 'border-emerald-500/50 shadow-[0_20px_45px_-10px_rgba(0,0,0,0.85),0_0_30px_rgba(16,185,129,0.25)]'
+              : 'shadow-[0_8px_30px_rgba(0,0,0,0.6)]'
+          }`}
+        >
+          {/* Shine Overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none transition-opacity duration-300 rounded-2xl z-0"
+            style={shineStyle}
+            aria-hidden="true"
+          />
+
+          <div className="relative z-10 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {project.badge}
+              </span>
+              <span className="text-xs font-mono text-zinc-500">
+                {project.serial}
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors mb-3 tracking-tight">
+              {project.title}
+            </h3>
+
+            <p className="text-zinc-300/90 text-sm sm:text-base leading-relaxed mb-6 font-normal">
+              {project.description}
+            </p>
+
+            <div className="flex flex-wrap gap-2 mb-8">
+              {project.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs font-mono px-2.5 py-1 rounded-lg bg-carbon-800/80 border border-emerald-500/15 text-zinc-300"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="relative z-10 pt-4 border-t border-emerald-500/15 flex items-center gap-3">
+            <a
+              href={project.demoUrl}
+              onClick={(e) => {
+                e.preventDefault();
+                alert(`Opening Live Demo for ${project.title}`);
+              }}
+              className="flex-1 py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm text-carbon-950 bg-emerald-400 hover:bg-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.35)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Live Demo</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
+            <a
+              href={project.githubUrl}
+              onClick={(e) => {
+                e.preventDefault();
+                alert(`Opening GitHub Code Repository for ${project.title}`);
+              }}
+              className="flex-1 py-2.5 px-4 rounded-xl font-medium text-xs sm:text-sm text-zinc-200 hover:text-white bg-carbon-800/80 hover:bg-emerald-950/40 border border-emerald-500/30 hover:border-emerald-400 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>GitHub Code</span>
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    // 5. FeaturedProjects Showcase Component
+    function FeaturedProjects() {
+      const [activeFilter, setActiveFilter] = useState('All');
+      const filterOptions = ['All', 'Web Apps', 'AI / ML', 'Mini-Projects'];
+
+      const projectsData = [
+        {
+          id: 'phishing-email-scanner',
+          serial: '// 01',
+          title: 'Phishing Email Scanner',
+          badge: 'React // Security',
+          categories: ['Web Apps'],
+          description:
+            'Intelligent defense system that scans incoming emails and SMS messages to detect phishing signatures and deceptive URLs. Proactively notifies users with risk severity alerts before they interact with malicious payloads.',
+          tags: ['React', 'Tailwind CSS', 'NLP / Heuristics', 'REST API'],
+          demoUrl: '#',
+          githubUrl: '#',
+        },
+        {
+          id: 'cyber-threat-awareness',
+          serial: '// 02',
+          title: 'Cyber Threat Awareness for Students',
+          badge: 'Python // Threat Intel',
+          categories: ['AI / ML', 'Mini-Projects'],
+          description:
+            'Interactive educational platform built in Python designed to educate students about prevalent cyber threats and digital attack vectors around them. Features interactive attack simulations, safety audits, and real-time threat intelligence feeds.',
+          tags: ['Python', 'FastAPI', 'CyberSec', 'Threat Intel'],
+          demoUrl: '#',
+          githubUrl: '#',
+        },
+        {
+          id: 'social-engineering-detector',
+          serial: '// 03',
+          title: 'Social Engineering Detector',
+          badge: 'Node.js // Real-time',
+          categories: ['Web Apps', 'AI / ML'],
+          description:
+            'Real-time behavioral monitoring application that analyzes communication patterns to identify psychological manipulation and pretexting tactics. Delivers immediate push notifications and defensive guidance while the user is actively targeted.',
+          tags: ['Node.js', 'Express', 'Socket.io', 'Sentiment Analysis'],
+          demoUrl: '#',
+          githubUrl: '#',
+        },
+      ];
+
+      const filteredProjects =
+        activeFilter === 'All'
+          ? projectsData
+          : projectsData.filter((item) => item.categories.includes(activeFilter));
+
+      return (
+        <section id="projects" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  FEATURED PROJECTS
+                </span>
+                <span className="h-[1px] w-8 bg-emerald-500/40" />
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+                Cyber & Web <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-400 bg-clip-text text-transparent">Showcase</span>
+              </h2>
+              <p className="text-zinc-400 text-sm sm:text-base mt-2 max-w-xl">
+                Real-world security and engineering tools built with React, Python, and Node.js.
+              </p>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-carbon-900/90 border border-emerald-500/20 backdrop-blur-md shadow-lg self-start md:self-auto">
+              {filterOptions.map((filter) => {
+                const isActive = activeFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`relative px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer ${
+                      isActive
+                        ? 'text-carbon-950 font-semibold bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.45)]'
+                        : 'text-zinc-400 hover:text-emerald-300 hover:bg-emerald-950/30'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3-Column Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {filteredProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+
+          {filteredProjects.length === 0 && (
+            <div className="text-center py-16 p-8 rounded-2xl bg-carbon-900/50 border border-emerald-500/15">
+              <p className="font-mono text-zinc-400 text-sm">No projects currently under the "{activeFilter}" filter.</p>
+              <button
+                onClick={() => setActiveFilter('All')}
+                className="mt-4 px-4 py-2 rounded-xl text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 hover:border-emerald-400"
+              >
+                Show All Projects
+              </button>
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    // 6. TechStack: Interactive Categorized Skills Section
+    function TechStack() {
+      const icons = {
+        c: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8a5 5 0 100 8" />
+          </svg>
+        ),
+        cpp: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8a4.5 4.5 0 100 8m5-4h4m-2-2v4m-8-2h4m-2-2v4" />
+          </svg>
+        ),
+        python: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.912 2C6.726 2 7.07 4.25 7.07 4.25v2.24h4.945v.718H5.066S2 6.848 2 12.012c0 5.163 2.673 5.006 2.673 5.006h1.597v-2.27s-.087-2.674 2.64-2.674h4.887s2.518.04 2.518-2.484V4.484S16.79 2 11.912 2zm-1.412 1.54a.78.78 0 11.002 1.56.78.78 0 01-.002-1.56zm1.5 18.46c5.186 0 4.842-2.25 4.842-2.25v-2.24h-4.945v-.718h6.949S22 17.152 22 11.988c0-5.163-2.673-5.006-2.673-5.006h-1.597v2.27s.087 2.674-2.64 2.674h-4.887s-2.518-.04-2.518 2.484v4.611s-.476 2.479 4.402 2.479zm1.412-1.54a.78.78 0 11-.002-1.56.78.78 0 01.002 1.56z" />
+          </svg>
+        ),
+        java: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 17s1.5 1 4 1 4-1 4-1M9 13s1 1 3 1 3-1 3-1M10 9s.8.7 2 .7 2-.7 2-.7M5 20s2.5 2 7 2 7-2 7-2" />
+          </svg>
+        ),
+        linux: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="4" y="4" width="16" height="16" rx="3" strokeWidth="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l3 3-3 3m5 0h3" />
+          </svg>
+        ),
+        react: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <ellipse cx="12" cy="12" rx="10" ry="4" strokeWidth="1.8" />
+            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" strokeWidth="1.8" />
+            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" strokeWidth="1.8" />
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+          </svg>
+        ),
+        tailwind: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.336 6.182 14.975 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.336 13.382 8.975 12 6.001 12z" />
+          </svg>
+        ),
+        nodejs: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l8.5 4.9v9.8L12 21.6 3.5 16.7V6.9L12 2zm0 2.3L5.5 8.1v7.8l6.5 3.8 6.5-3.8V8.1L12 4.3z" />
+          </svg>
+        ),
+        css: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 3l1.8 17.5L12 22l6.2-1.5L20 3H4zm13 5H8.5l.3 3.5h7.7l-.6 6-3.9 1-3.9-1-.2-2.5" />
+          </svg>
+        ),
+        git: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="6" cy="6" r="3" strokeWidth="2" />
+            <circle cx="6" cy="18" r="3" strokeWidth="2" />
+            <circle cx="18" cy="9" r="3" strokeWidth="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 9v6m0-3a6 6 0 016-6h3" />
+          </svg>
+        ),
+        dsa: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="5" r="3" strokeWidth="2" />
+            <circle cx="6" cy="18" r="3" strokeWidth="2" />
+            <circle cx="18" cy="18" r="3" strokeWidth="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 7.5L7.5 15.5m6.5-8l2.5 8" />
+          </svg>
+        ),
+        os: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h2m-2 4h4m-4 4h8" />
+          </svg>
+        ),
+        dbms: (
+          <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <ellipse cx="12" cy="5" rx="8" ry="3" strokeWidth="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5m-16 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+          </svg>
+        ),
+      };
+
+      const skillCategories = [
+        {
+          id: 'languages',
+          title: 'Languages',
+          badge: '// CORE CODE',
+          description: 'Foundational syntax, systems programming, and scripting environments.',
+          skills: [
+            { name: 'C', icon: icons.c, level: 'Familiar' },
+            { name: 'C++', icon: icons.cpp, level: 'Familiar' },
+            { name: 'Python', icon: icons.python, level: 'Familiar' },
+            { name: 'Java', icon: icons.java, level: 'Learning' },
+            { name: 'Linux', icon: icons.linux, level: 'Familiar' },
+          ],
+        },
+        {
+          id: 'frameworks-tools',
+          title: 'Frameworks & Tools',
+          badge: '// ECOSYSTEM',
+          description: 'Modern reactive frontend engines, backend runtimes, and VCS pipelines.',
+          skills: [
+            { name: 'React', icon: icons.react, level: 'Familiar' },
+            { name: 'Tailwind CSS', icon: icons.tailwind, level: 'Familiar' },
+            { name: 'Node.js', icon: icons.nodejs, level: 'Familiar' },
+            { name: 'CSS3', icon: icons.css, level: 'Familiar' },
+            { name: 'Git & GitHub', icon: icons.git, level: 'Familiar' },
+          ],
+        },
+        {
+          id: 'core-cs',
+          title: 'Core CS Concepts',
+          badge: '// THEORY & SYSTEMS',
+          description: 'Essential computational theory, system mechanics, and data management.',
+          skills: [
+            { name: 'Data Structures', icon: icons.dsa, level: 'Familiar' },
+            { name: 'Operating Systems', icon: icons.os, level: 'Learning' },
+            { name: 'DBMS', icon: icons.dbms, level: 'Familiar' },
+          ],
+        },
+      ];
+
+      return (
+        <section id="skills" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
+            <div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
+                  TECHNICAL ARSENAL
+                </span>
+                <span className="h-[1px] w-8 bg-emerald-500/40" />
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+                Tech Stack & <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-400 bg-clip-text text-transparent">Skills</span>
+              </h2>
+              <p className="text-zinc-400 text-sm sm:text-base mt-2 max-w-xl">
+                Interactive overview of my programming languages, frameworks, and academic computing foundations.
+              </p>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400 bg-carbon-900/80 border border-emerald-500/20 px-4 py-2 rounded-xl backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>Hover badges to check comfort level</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {skillCategories.map((category) => (
+              <div
+                key={category.id}
+                className="rounded-2xl p-6 sm:p-7 bg-[#0d1117]/85 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 shadow-[0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_15px_35px_-5px_rgba(0,0,0,0.8),0_0_25px_rgba(16,185,129,0.15)] transition-all duration-300 flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xl font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors tracking-tight">
+                      {category.title}
+                    </h3>
+                    <span className="font-mono text-[11px] text-emerald-400/80 bg-emerald-950/50 border border-emerald-500/20 px-2 py-0.5 rounded">
+                      {category.badge}
+                    </span>
+                  </div>
+
+                  <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-6 font-normal">
+                    {category.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2.5">
+                    {category.skills.map((skill) => {
+                      const isLearning = skill.level === 'Learning';
+                      return (
+                        <div key={skill.name} className="group/badge relative">
+                          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-carbon-800/80 hover:bg-emerald-950/50 border border-emerald-500/20 hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95">
+                            <span className="text-emerald-400 group-hover/badge:text-lime-300 transition-colors">
+                              {skill.icon}
+                            </span>
+                            <span className="text-xs sm:text-sm font-medium text-zinc-200 group-hover/badge:text-white transition-colors">
+                              {skill.name}
+                            </span>
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isLearning ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+                              }`}
+                            />
+                          </div>
+
+                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover/badge:opacity-100 group-hover/badge:-top-10 transition-all duration-200 z-30 flex flex-col items-center">
+                            <div className="px-2.5 py-1 rounded-md bg-emerald-950/95 border border-emerald-400/50 text-emerald-200 text-[10px] font-mono font-medium shadow-[0_4px_12px_rgba(0,0,0,0.8),0_0_10px_rgba(16,185,129,0.3)] whitespace-nowrap flex items-center gap-1.5 backdrop-blur-md">
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  isLearning ? 'bg-amber-400' : 'bg-emerald-400'
+                                }`}
+                              />
+                              <span>Level: {skill.level}</span>
+                            </div>
+                            <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-emerald-950/95 -mt-[1px]" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-emerald-500/15 flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                  <span>{category.skills.length} modules</span>
+                  <span className="text-emerald-400/80 group-hover:text-lime-300 transition-colors">verified_vtu_lab</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // 7. CampusJourney Component: Interactive Illuminated Timeline & 2x2 Achievement Grid
+    function CampusJourney() {
+      const milestones = [
+        {
+          year: '2026',
+          badge: 'CURRENT MILESTONE',
+          title: '2nd Year B.Tech & Built My First Website',
+          institution: 'K.S. Institute of Technology, Bangalore',
+          note: 'Pursuing B.E. in Computer Science with Cyber Security; designed and deployed my first responsive web applications and interactive developer suites.',
+          tags: ['KSIT Bengaluru', 'CyberSec B.E.', 'Frontend Engineering'],
+          isCurrent: true,
+        },
+        {
+          year: '2025',
+          badge: 'PAST MILESTONE',
+          title: 'Core Technical Club Member & Club Service Lead',
+          institution: 'Student Technical Society & Campus Clubs',
+          note: 'Spearheaded collegiate technical service activities and hands-on coding sessions, mentoring fellow students in foundational systems and collaborative tools.',
+          tags: ['Club Service Lead', 'Student Leadership', 'Hackathon Prep'],
+          isCurrent: false,
+        },
+      ];
+
+      const achievements = [
+        {
+          id: 'bmc-pitch',
+          icon: (
+            <svg className="w-6 h-6 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          ),
+          metric: '1st Place',
+          title: 'Business Model Canvas Pitch Winner',
+          description: 'Secured top honors for pitching a scalable collegiate tech enterprise model with robust product architecture.',
+        },
+        {
+          id: 'hackathons',
+          icon: (
+            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          ),
+          metric: '5+ Sprints',
+          title: 'Participated in 5+ Hackathons',
+          description: 'Competed in collegiate and inter-college hackathons, designing rapid prototypes under rigorous 24-48h timeframes.',
+        },
+        {
+          id: 'cybersec-lab',
+          icon: (
+            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          ),
+          metric: 'Security Focus',
+          title: 'Cyber Threat Analysis Drills',
+          description: 'Hands-on participation in defensive network security simulations, vulnerability testing, and threat model audits.',
+        },
+        {
+          id: 'community-lead',
+          icon: (
+            <svg className="w-6 h-6 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          ),
+          metric: '50+ Peers',
+          title: 'Technical Service Leadership',
+          description: 'Coordinated student study circles and technical workshops on Git version control, Linux commands, and web fundamentals.',
+        },
+      ];
+
+      return (
+        <section id="campus" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
+            <div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="font-mono text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  CAMPUS CHRONICLES
+                </span>
+                <span className="h-[1px] w-8 bg-emerald-500/40" />
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+                Education & <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-400 bg-clip-text text-transparent">Campus Journey</span>
+              </h2>
+              <p className="text-zinc-400 text-sm sm:text-base mt-2 max-w-xl">
+                My collegiate milestones at K.S. Institute of Technology, leadership roles, and hackathon milestones.
+              </p>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400 bg-carbon-900/80 border border-emerald-500/20 px-4 py-2 rounded-xl backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
+              <span>B.E. CSE // Class of 2028</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+            {/* Timeline Column */}
+            <div className="lg:col-span-7">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+                  <span className="text-emerald-400 font-mono">//</span>
+                  <span>Milestone Timeline</span>
+                </h3>
+                <span className="text-xs font-mono text-emerald-400/80 bg-emerald-950/40 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                  KSIT Bengaluru
+                </span>
+              </div>
+
+              <div className="relative pl-6 sm:pl-8 space-y-8">
+                {/* Illuminated Vertical Spine */}
+                <div
+                  className="absolute left-2.5 sm:left-3 top-3 bottom-3 w-[2px] bg-gradient-to-b from-emerald-400 via-emerald-500/70 to-lime-400 shadow-[0_0_12px_rgba(16,185,129,0.45)]"
+                  aria-hidden="true"
+                />
+
+                {milestones.map((m) => (
+                  <div key={m.year} className="relative group">
+                    {/* Glowing Nodal Dot */}
+                    <div
+                      className={`absolute -left-[23px] sm:-left-[27px] top-1.5 flex items-center justify-center w-5 h-5 rounded-full ${
+                        m.isCurrent
+                          ? 'bg-emerald-400 shadow-[0_0_15px_#10b981]'
+                          : 'bg-emerald-600/80 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                      } border-4 border-[#0d1117] transition-transform duration-300 group-hover:scale-125`}
+                    >
+                      {m.isCurrent && (
+                        <span className="absolute w-7 h-7 rounded-full bg-emerald-400/30 animate-ping pointer-events-none" />
+                      )}
+                    </div>
+
+                    {/* Milestone Card */}
+                    <div className="rounded-2xl p-6 sm:p-7 bg-[#0d1117]/85 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/50 shadow-[0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_15px_35px_-5px_rgba(0,0,0,0.8),0_0_25px_rgba(16,185,129,0.2)] transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                            {m.year}
+                          </span>
+                          <span className="h-4 w-[1px] bg-emerald-500/30" />
+                          <span className="text-xs font-mono text-zinc-400">
+                            {m.institution}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full ${
+                            m.isCurrent
+                              ? 'bg-emerald-950/70 border border-emerald-400/50 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                              : 'bg-carbon-800 border border-zinc-700 text-zinc-400'
+                          }`}
+                        >
+                          {m.badge}
+                        </span>
+                      </div>
+
+                      <h4 className="text-lg sm:text-xl font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors mb-2 tracking-tight">
+                        {m.title}
+                      </h4>
+
+                      <p className="text-zinc-300/90 text-sm sm:text-base leading-relaxed mb-5 font-normal">
+                        {m.note}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 pt-3 border-t border-emerald-500/10">
+                        {m.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs font-mono px-2.5 py-1 rounded-md bg-carbon-800/80 border border-emerald-500/15 text-zinc-300"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Achievement Badges Column (2x2 Grid) */}
+            <div className="lg:col-span-5">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+                  <span className="text-lime-400 font-mono">//</span>
+                  <span>Accomplishment Badges</span>
+                </h3>
+                <span className="text-xs font-mono text-lime-300/80 bg-emerald-950/40 border border-lime-500/20 px-2.5 py-1 rounded-lg">
+                  Honors & Callouts
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {achievements.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group p-5 rounded-2xl bg-[#0d1117]/85 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/50 shadow-[0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_30px_-5px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.18)] transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3.5">
+                        <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/30 group-hover:border-emerald-400 transition-colors shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+                          {item.icon}
+                        </div>
+                        <span className="font-mono text-[11px] font-semibold text-lime-300 bg-emerald-950/40 border border-lime-500/20 px-2 py-0.5 rounded">
+                          {item.metric}
+                        </span>
+                      </div>
+
+                      <h4 className="text-sm sm:text-base font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors mb-2 leading-snug">
+                        {item.title}
+                      </h4>
+
+                      <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-emerald-500/10 flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                      <span>Verified</span>
+                      <span className="text-emerald-400 group-hover:text-lime-300 transition-colors">★ KSIT Honor</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // 8. Main App Component
+    function App() {
+      return (
+        <div className="relative min-h-screen bg-[#0d1117] text-zinc-100 font-sans selection:bg-emerald-500 selection:text-black overflow-x-hidden">
+          <MatrixGridCanvas />
+          <Navbar />
+          <main className="relative z-10">
+            <Hero />
+            <FeaturedProjects />
+            <TechStack />
+            <CampusJourney />
+
+            {/* About Section */}
+            <section id="about" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+              <div className="p-8 sm:p-10 rounded-2xl bg-carbon-900/80 border border-emerald-500/20 backdrop-blur-md shadow-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="font-mono text-emerald-400 text-sm font-semibold">// 04</span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">About Me</h2>
+                  <div className="h-[1px] flex-grow bg-gradient-to-r from-emerald-500/30 to-transparent ml-4" />
+                </div>
+                <p className="text-zinc-300 leading-relaxed text-base sm:text-lg mb-6">
+                  I am currently pursuing my Bachelor of Engineering in Computer Science with Cyber Security at K.S. Institute of Technology, Bangalore.
+                  My focus lies in building defensive security mechanisms, proactive threat detection systems, and high-performance reactive web interfaces.
+                  I believe in leveraging technology to protect digital privacy while creating intuitive developer tools.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                  <div className="p-4 rounded-xl bg-carbon-800/50 border border-emerald-500/15">
+                    <span className="text-emerald-400 font-mono text-sm block mb-1">01. Defensive CyberSec</span>
+                    <p className="text-xs text-zinc-400">Phishing mitigation, social engineering detection, and vulnerability testing.</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-carbon-800/50 border border-emerald-500/15">
+                    <span className="text-lime-300 font-mono text-sm block mb-1">02. Modern Frontend</span>
+                    <p className="text-xs text-zinc-400">Building responsive, fluid, and interactive React & Tailwind web apps.</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-carbon-800/50 border border-emerald-500/15">
+                    <span className="text-emerald-300 font-mono text-sm block mb-1">03. Python Threat Intel</span>
+                    <p className="text-xs text-zinc-400">Developing automated scanners, heuristic analyzers, and awareness toolkits.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Contact Section */}
+            <section id="contact" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
+              <div className="p-10 rounded-2xl bg-gradient-to-b from-carbon-900 to-carbon-950 border border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.15)]">
+                <span className="font-mono text-emerald-400 text-xs font-semibold uppercase tracking-widest block mb-2">
+                  Ready to Collaborate
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+                  Let's Build Something Exceptional Together
+                </h2>
+                <p className="text-zinc-400 text-sm sm:text-base max-w-xl mx-auto mb-8">
+                  Whether you have an internship opportunity, a project proposal, or want to discuss cyber threat intelligence and web architecture, my inbox is always open.
+                </p>
+                <a
+                  href="mailto:chetansurya@example.com"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-carbon-950 bg-emerald-400 hover:bg-lime-400 shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+                >
+                  <span>Say Hello</span>
+                  <span>⚡</span>
+                </a>
+              </div>
+            </section>
+          </main>
+
+          {/* Footer */}
+          <footer className="relative z-10 py-8 border-t border-emerald-500/15 text-center text-xs font-mono text-zinc-500">
+            <p>© {new Date().getFullYear()} Chetan Surya. Built with React & Tailwind CSS // Cyber-Emerald Edition</p>
+          </footer>
+        </div>
+      );
+    }
+
+    // Mount React App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
