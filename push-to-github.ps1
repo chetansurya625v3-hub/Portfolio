@@ -46,3 +46,4 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host ">>> If prompted for authentication, log in to GitHub in the popup window or use a Personal Access Token." -ForegroundColor Yellow
 }
+

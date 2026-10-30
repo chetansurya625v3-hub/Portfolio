@@ -4,11 +4,14 @@ import Hero from './components/Hero';
 import FeaturedProjects from './components/FeaturedProjects';
 import TechStack from './components/TechStack';
 import CampusJourney from './components/CampusJourney';
+import Contact from './components/Contact';
+import Footer from './components/Footer';
 import MatrixGridCanvas from './components/MatrixGridCanvas';
+import CursorSpark from './components/CursorSpark';
 
 /**
  * Main Application Component
- * Theme: Cyber-Emerald / Dark Mode (#0d1117 carbon background with neon emerald & lime accents)
+ * Theme: Cyber-Emerald / Dark Mode (#0d1117 matte carbon with neon emerald & lime accents)
  */
 export default function App() {
   return (
@@ -16,27 +19,31 @@ export default function App() {
       {/* 1. Interactive HTML5 Matrix-Dot Grid Background Canvas */}
       <MatrixGridCanvas />
 
-      {/* 2. Floating Frosted-Glass Navigation Bar */}
+      {/* 2. Easter Egg: Smooth Trailing Cursor Light Spark Follower */}
+      <CursorSpark />
+
+      {/* 3. Floating Frosted-Glass Navigation Bar */}
       <Navbar />
 
-      {/* 3. Opening Hero Intro Screen */}
+      {/* Main Content Sections */}
       <main className="relative z-10">
+        {/* Hero Opening Screen */}
         <Hero />
 
-        {/* 4. Featured Projects Showcase */}
+        {/* Featured Projects Showcase (3D Perspective Tilt Cards) */}
         <FeaturedProjects />
 
-        {/* 5. Interactive Tech Stack & Skills */}
+        {/* Interactive Tech Stack & Skills (3 Categories, Icons, Comfort Tooltips) */}
         <TechStack />
 
-        {/* 6. Education & Campus Journey (Timeline & Achievement Badges) */}
+        {/* Education & Campus Journey (Illuminated Timeline & Accomplishment Badges) */}
         <CampusJourney />
 
-        {/* 7. About Me Section */}
+        {/* About Me Section */}
         <section id="about" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
           <div className="p-8 sm:p-10 rounded-2xl bg-carbon-900/80 border border-emerald-500/20 backdrop-blur-md shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
-              <span className="font-mono text-emerald-400 text-sm font-semibold">// 04</span>
+              <span className="font-mono text-emerald-400 text-sm font-semibold">// 05</span>
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">About Me</h2>
               <div className="h-[1px] flex-grow bg-gradient-to-r from-emerald-500/30 to-transparent ml-4" />
             </div>
@@ -62,33 +69,12 @@ export default function App() {
           </div>
         </section>
 
-        {/* 8. Contact Section */}
-        <section id="contact" className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-          <div className="p-10 rounded-2xl bg-gradient-to-b from-carbon-900 to-carbon-950 border border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.15)]">
-            <span className="font-mono text-emerald-400 text-xs font-semibold uppercase tracking-widest block mb-2">
-              Ready to Collaborate
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-              Let's Build Something Exceptional Together
-            </h2>
-            <p className="text-zinc-400 text-sm sm:text-base max-w-xl mx-auto mb-8">
-              Whether you have an internship opportunity, a project proposal, or want to discuss cyber threat intelligence and web architecture, my inbox is always open.
-            </p>
-            <a
-              href="mailto:chetansurya@example.com"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-carbon-950 bg-emerald-400 hover:bg-lime-400 shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-            >
-              <span>Say Hello</span>
-              <span>⚡</span>
-            </a>
-          </div>
-        </section>
+        {/* Contact Section: Interactive Form, Spinner & Magnetic Links */}
+        <Contact />
       </main>
 
       {/* Cyber Footer */}
-      <footer className="relative z-10 py-8 border-t border-emerald-500/15 text-center text-xs font-mono text-zinc-500">
-        <p>© {new Date().getFullYear()} Chetan Surya. Built with React & Tailwind CSS // Cyber-Emerald Edition</p>
-      </footer>
+      <Footer />
     </div>
   );
 }
